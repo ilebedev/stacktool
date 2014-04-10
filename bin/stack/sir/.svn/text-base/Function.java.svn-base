@@ -1,0 +1,6 @@
+package stack.ir;
+
+public class Function {
+	//list of basic blocks
+
+}

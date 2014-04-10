@@ -1,0 +1,84 @@
+C_DIRECTORY="C:/projects/stack/test/c/"
+WORKING_DIRECTORY="C:/projects/stack/test/c/temp/"
+OUTPUT_DIRECTORY="C:/projects/stack/test/c/temp/"
+
+FRONTEND_COMMAND="C:/projects/stack/llvm-build/bin/Debug/clang.exe"
+BACKEND_COMMAND="C:/projects/stack/llvm-build/bin/Debug/llc.exe"
+R_COMMAND="C:/Program Files/R/R-2.15.2/bin/Rscript.exe"
+
+C_SOURCE="factorial.c"
+
+# Run front-end compiler (C -> LLVM)
+print("front-end compiler...")
+sys.run(FRONTEND_COMMAND + " -ccc-host-triple stack -S -emit-llvm -O3 -o " + WORKING_DIRECTORY+C_SOURCE+".llvm " + C_DIRECTORY+C_SOURCE)
+print("...OK")
+
+# Run back-end compiler (LLVM -> SIR)
+print("back-end compiler...")
+sys.run(BACKEND_COMMAND + " -march=stack -o " + WORKING_DIRECTORY+C_SOURCE+".sir " + WORKING_DIRECTORY+C_SOURCE+".llvm")
+print("...OK")
+
+# Run SIR parser (SIR -> Stack Module)
+print("read sir...")
+srcSIR=open(WORKING_DIRECTORY+C_SOURCE+".sir").read()
+print("sir parser...")
+srcM=sir.parse(srcSIR)
+
+# Run Stack Compiler (Stack Module -> Program)
+print("sir compiler...")
+cprog = compiler.compile(srcM)
+print(cprog)
+print("\n\n\n")
+prog = asm.collapse(cprog)
+print("\n\n\n=====================\nCompilerd source\n=====================")
+print(prog)
+print("\n\n\n")
+
+# Configure the simulation
+# 121-core system
+sim.configure(121)
+sim.enableContext(0)
+
+# Load executable
+sim.load(prog)
+sim.init()
+
+# call "__boot" with no args (placed at address 0)
+sim.reset(0, "")
+
+# Initialize simulation
+sim.init()
+
+# Start traces
+sim.startTrace(0)
+sim.startMemTrace(0)
+sim.startMigrationTrace(0)
+
+# Simulate up to 1000000 events
+sim.step(1000000)
+
+# Print results
+trace = sim.getTrace(0)
+memTrace = sim.getMemTrace(0)
+migrationTrace = sim.getMigrationTrace(0)
+    
+print("\n")
+print("Instruction Trace, Context #" + str(0))
+print(trace)
+print("\n")
+print("Memory Trace, Context #" + str(0))
+print(memTrace)
+print("\n")
+print("Migration Trace, Context #" + str(0))
+print(migrationTrace)
+print("\n")
+
+# Check stack
+print("Main stack contents for context #" + str(0))
+sim.stack(0)
+print("\n")
+
+# Check memory locations
+print("Memory")
+sim.allMem()
+print("\n")

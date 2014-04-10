@@ -1,0 +1,32 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionSLL extends Instruction {
+	int imm16;
+	
+	public InstructionSLL(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.SLL, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.SLL, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Shift top item on the stack left by imm16.
+		// NOTE: Undefined behavior if imm16 > 32
+		int val = M.getStack(0).pop();
+		int result = val << imm16;
+		M.getStack(0).push(result);
+	}
+}

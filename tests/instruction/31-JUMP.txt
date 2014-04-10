@@ -1,0 +1,12 @@
+#Test Body:
+#============
+PUSH 3;
+JUMP;
+UNREACHABLE;
+PUSH 1;
+UNREACHABLE;
+#============
+#Test Result:
+#============
+#0x00000001
+#============

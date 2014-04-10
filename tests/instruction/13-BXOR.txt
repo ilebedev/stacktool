@@ -1,0 +1,29 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 0;
+BXOR;
+
+PUSH 0;
+PUSH -1;
+BXOR;
+
+PUSH 0;
+PUSH 0xBEEF;
+SETHI 0xDEAD;
+BXOR;
+
+PUSH 0xFFFF;
+SETHI 0xFF;
+PUSH 0xFF00;
+SETHI 0xFFFF;
+BXOR;
+
+#============
+#Test Result:
+#============
+#0xFF0000FF;
+#0xDEADBEEF
+#0xFFFFFFFF
+#0x00000000
+#============

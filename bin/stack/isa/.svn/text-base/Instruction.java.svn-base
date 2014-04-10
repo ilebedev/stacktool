@@ -1,0 +1,537 @@
+package stack.isa;
+
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+
+
+import stack.isa.core.*;
+import stack.isa.fatcore.*;
+import stack.isa.multicore.*;
+import stack.isa.magic.*;
+import stack.machine.Machine;
+
+public abstract class Instruction {
+	String comment;
+
+	public String getComment(){
+		if (comment == null){
+			comment = "";
+		}
+		return comment;
+	}
+	
+	public Instruction(String comment){
+		this.comment = comment;
+		if (comment == null){
+			comment = "";
+		}
+	}
+
+	@Override
+	public abstract String toString();
+	public abstract int toBinary();
+	public abstract void execute(Machine M);
+
+	public static String get_string(StackOP op, String comment){
+		return op.getName() + ";\t" + ((comment.length() > 0)? ("#" + comment) : "");
+	}
+	
+	public static String get_string(StackOP op, int imm16, String comment){
+		return op.getName() + " " + imm16 + ";\t" + ((comment.length() > 0)? ("#" + comment) : "");
+	}
+	
+	public static String get_string(StackOP op, int imm8_hi, int imm8_lo, String comment){
+		return op.getName() + " " + imm8_hi + " " + imm8_lo+ ";\t" + ((comment.length() > 0)? ("#" + comment) : "");
+	}
+	
+	public static String get_string(StackOP op, String label, String comment){
+		return op.getName() + " " + label + ";\t" + ((comment.length() > 0)? ("#" + comment) : "");
+	}
+	
+	public static int assemble(StackOP op, int imm16, int imm8_hi, int imm8_lo){
+		return ((op.getEncoding()>>16 & 0x7FFF) << 16) | imm16 | (imm8_hi << 8) | (imm8_lo);
+	}
+
+	public static Instruction disassemble(int instruction) throws Exception{
+		int bin_op = instruction & 0x7FFF0000;
+		int imm16 = instruction & 0xFFFF;
+		int imm8_hi = (instruction >> 8) & 0xFF;
+		int imm8_lo = instruction & 0xFF;
+		StackOP op = StackOP.translate(bin_op);
+
+		return disassemble(op, imm16, imm8_hi, imm8_lo, "", "");
+	}
+
+	public static Instruction disassemble(String instruction) throws Exception{
+		// Interpert the instruction string using a regex
+		
+		//ADD;	#COMMENT
+		//PUSH 10;	#COMMENT
+		//MOV 0 1;	#COMMENT
+		//MAGIC_CALL @f_factorial;	#COMMENT
+		Pattern pattern_0arg = Pattern.compile("\\s*([_A-Z]+)\\s*;\\s*(#.*)?", Pattern.CASE_INSENSITIVE);
+		Pattern pattern_1arg = Pattern.compile("\\s*([_A-Z]+)\\s*(-?[0-9]+)\\s*;\\s*(#.*)?", Pattern.CASE_INSENSITIVE);
+		Pattern pattern_2arg = Pattern.compile("\\s*([_A-Z]+)\\s*(-?[0-9]+)\\s*(-?[0-9]+)\\s*;\\s*(#.*)?", Pattern.CASE_INSENSITIVE);
+		Pattern pattern_lab = Pattern.compile("\\s*([_A-Z]+)\\s*(@[^\\s;]+)\\s*;\\s*(#.*)?", Pattern.CASE_INSENSITIVE);
+		
+		Matcher matcher_0arg = pattern_0arg.matcher(instruction);
+		Matcher matcher_1arg = pattern_1arg.matcher(instruction);
+		Matcher matcher_2arg = pattern_2arg.matcher(instruction);
+		Matcher matcher_lab = pattern_lab.matcher(instruction);
+		
+		int imm16 = 0;
+		int imm8_hi = 0;
+		int imm8_lo = 0;
+		String label = "";
+		String comment = "";
+		String s_op;
+		
+		if (matcher_0arg.matches()){
+			// instruction with no arguments
+			s_op = matcher_0arg.group(1);
+			comment = matcher_0arg.group(2);
+		} else if (matcher_1arg.matches()) {
+			// instruction with one immediate
+			s_op = matcher_1arg.group(1);
+			imm16 = Integer.parseInt(matcher_1arg.group(2));
+			comment = matcher_1arg.group(3);
+		} else if (matcher_2arg.matches()) {
+			// instruction with two immediates
+			s_op = matcher_2arg.group(1);
+			imm8_hi = Integer.parseInt(matcher_2arg.group(2));;
+			imm8_lo = Integer.parseInt(matcher_2arg.group(3));;
+			comment = matcher_2arg.group(4);
+		} else if (matcher_lab.matches()) {
+			// instruction with a label operand
+			s_op = matcher_lab.group(1);
+			label = matcher_lab.group(2);
+			comment = matcher_lab.group(3);
+		} else {
+			// not a recognizable instruction string
+			throw new Exception("Illegal Instruction");
+		}
+		
+		StackOP op = StackOP.translate(s_op);
+		
+		imm16 = imm16 & 0xFFFF;
+		imm8_hi = imm8_hi & 0xFF;
+		imm8_lo = imm8_lo & 0xFF;
+
+		return disassemble(op, imm16, imm8_hi, imm8_lo, label, comment);
+	}
+
+	public static Instruction disassemble(StackOP op, int imm16, int imm8_hi, int imm8_lo, String label, String comment) throws Exception{
+		Instruction I;
+
+		switch(op){
+		case PUSH:
+			I = new InstructionPUSH(imm16, comment);
+			break;
+		case PULL:
+			I = new InstructionPULL(imm16, comment);
+			break;
+		case PULL_COPY:
+			I = new InstructionPULL_COPY(imm16, comment);
+			break;
+		case TUCK:
+			I = new InstructionTUCK(imm16, comment);
+			break;
+		case TUCK_COPY:
+			I = new InstructionTUCK_COPY(imm16, comment);
+			break;
+		case DROP:
+			I = new InstructionDROP(imm16, comment);
+			break;
+		case SWAP:
+			I = new InstructionSWAP(imm16, comment);
+			break;
+		case MOV:
+			I = new InstructionMOV(imm8_lo, imm8_hi, comment);
+			break;
+		case NOT:
+			I = new InstructionNOT(comment);
+			break;
+		case AND:
+			I = new InstructionAND(comment);
+			break;
+		case OR:
+			I = new InstructionOR(comment);
+			break;
+		case XOR:
+			I = new InstructionXOR(comment);
+			break;
+		case SLL:
+			I = new InstructionSLL(imm16, comment);
+			break;
+		case SRA:
+			I = new InstructionSRA(imm16, comment);
+			break;
+		case SRL:
+			I = new InstructionSRL(imm16, comment);
+			break;
+		case SET_HI:
+			I = new InstructionSET_HI(imm16, comment);
+			break;
+		case ADD:
+			I = new InstructionADD(comment);
+			break;
+		case SUB:
+			I = new InstructionSUB(comment);
+			break;
+		case COMP_EQ:
+			I = new InstructionCOMP_EQ(comment);
+			break;
+		case COMP_NE:
+			I = new InstructionCOMP_NE(comment);
+			break;
+		case COMP_UGT:
+			I = new InstructionCOMP_UGT(comment);
+			break;
+		case COMP_UGE:
+			I = new InstructionCOMP_UGE(comment);
+			break;
+		case COMP_ULT:
+			I = new InstructionCOMP_ULT(comment);
+			break;
+		case COMP_ULE:
+			I = new InstructionCOMP_ULE(comment);
+			break;
+		case COMP_SGT:
+			I = new InstructionCOMP_SGT(comment);
+			break;
+		case COMP_SGE:
+			I = new InstructionCOMP_SGE(comment);
+			break;
+		case COMP_SLT:
+			I = new InstructionCOMP_SLT(comment);
+			break;
+		case COMP_SLE:
+			I = new InstructionCOMP_SLE(comment);
+			break;
+		case LOAD:
+			I = new InstructionLOAD(imm16, comment);
+			break;
+		case STORE:
+			I = new InstructionSTORE(imm16, comment);
+			break;
+		case CALL:
+			I = new InstructionCALL(comment);
+			break;
+		case RETURN:
+			I = new InstructionRETURN(comment);
+			break;
+		case BRANCH:
+			I = new InstructionBRANCH(imm16, comment);
+			break;
+		case U_BRANCH:
+			I = new InstructionU_BRANCH(imm16, comment);
+			break;
+		case JUMP:
+			I = new InstructionJUMP(comment);
+			break;
+		case SYSCALL:
+			I = new InstructionSYSCALL(imm16, comment);
+			break;
+		case MUL:
+			I = new InstructionMUL(comment);
+			break;
+		case U_DIV:
+			I = new InstructionU_DIV(comment);
+			break;
+		case U_REM:
+			I = new InstructionU_REM(comment);
+			break;
+		case S_DIV:
+			I = new InstructionS_DIV(comment);
+			break;
+		case S_REM:
+			I = new InstructionS_REM(comment);
+			break;
+		case EM_LOAD:
+			I = new InstructionEM_LOAD(imm8_hi, imm8_lo, comment);
+			break;
+		case EM_STORE:
+			I = new InstructionEM_STORE(imm8_hi, imm8_lo, comment);
+			break;
+		case RA_LOAD:
+			I = new InstructionRA_LOAD(imm16, comment);
+			break;
+		case RA_STORE:
+			I = new InstructionRA_STORE(imm16, comment);
+			break;
+		case LOAD_L:
+			I = new InstructionLOAD_L(imm16, comment);
+			break;
+		case STORE_C:
+			I = new InstructionSTORE_C(imm16, comment);
+			break;
+		case MAGIC_GET:
+			I = new InstructionMAGIC_GET(String.valueOf(imm16), comment);
+			break;
+		case MAGIC_SET:
+			I = new InstructionMAGIC_SET(String.valueOf(imm16), comment);
+			break;
+		case MAGIC_BRANCH:
+			I = new InstructionMAGIC_BRANCH(label, comment);
+			break;
+		case MAGIC_JUMP:
+			I = new InstructionMAGIC_JUMP(label, comment);
+			break;
+		case MAGIC_CALL:
+			I = new InstructionMAGIC_CALL(label, comment);
+			break;
+		default:
+			throw new Exception("Unhandled Opcoede");
+		}
+		return I;
+	}
+
+	protected enum StackOP{
+		// Core
+					//	ISA_FAMILY | CATEGORY | OPCODE
+		PUSH(			((0<<27)|(0<<24)|(0<<16)),	"PUSH"),
+		PULL(			((0<<27)|(0<<24)|(1<<16)),	"PULL"),
+		PULL_COPY(		((0<<27)|(0<<24)|(2<<16)),	"PULL_COPY"),
+		TUCK(			((0<<27)|(0<<24)|(3<<16)),	"TUCK"),
+		TUCK_COPY(		((0<<27)|(0<<24)|(4<<16)),	"TUCK_COPY"),
+		SWAP(			((0<<27)|(0<<24)|(5<<16)),	"SWAP"),
+		DROP(			((0<<27)|(0<<24)|(6<<16)),	"DROP"),
+		OVER(			((0<<27)|(0<<24)|(7<<16)),	"OVER"),
+		MOV(			((0<<27)|(0<<24)|(8<<16)),	"MOV"),
+
+		NOT(			((0<<27)|(1<<24)|(0<<16)),	"NOT"),
+		AND(			((0<<27)|(1<<24)|(1<<16)),	"AND"),
+		OR(				((0<<27)|(1<<24)|(2<<16)),	"OR"),
+		XOR(			((0<<27)|(1<<24)|(3<<16)),	"XOR"),
+		SLL(			((0<<27)|(1<<24)|(4<<16)),	"SLL"),
+		SRA(			((0<<27)|(1<<24)|(5<<16)),	"SRA"),
+		SRL(			((0<<27)|(1<<24)|(6<<16)),	"SRL"),
+		SET_HI(			((0<<27)|(1<<24)|(7<<16)),	"SET_HI"),
+
+		ADD(			((0<<27)|(2<<24)|(0<<16)),	"ADD"),
+		SUB(			((0<<27)|(2<<24)|(1<<16)),	"SUB"),
+		COMP_EQ(		((0<<27)|(2<<24)|(2<<16)),	"EQ"),
+		COMP_NE(		((0<<27)|(2<<24)|(3<<16)),	"NE"),
+		COMP_UGT(		((0<<27)|(2<<24)|(4<<16)),	"COMP_UGT"),
+		COMP_UGE(		((0<<27)|(2<<24)|(5<<16)),	"COMP_UGE"),
+		COMP_ULT(		((0<<27)|(2<<24)|(6<<16)),	"COMP_ULT"),
+		COMP_ULE(		((0<<27)|(2<<24)|(7<<16)),	"COMP_ULE"),
+		COMP_SGT(		((0<<27)|(2<<24)|(8<<16)),	"COMP_SGT"),
+		COMP_SGE(		((0<<27)|(2<<24)|(9<<16)),	"COMP_SGE"),
+		COMP_SLT(		((0<<27)|(2<<24)|(10<<16)),	"COMP_SLT"),
+		COMP_SLE(		((0<<27)|(2<<24)|(11<<16)),	"COMP_SLE"),
+
+		LOAD(			((0<<27)|(3<<24)|(0<<16)),	"LOAD"),
+		STORE(			((0<<27)|(3<<24)|(1<<16)),	"STORE"),
+
+		CALL(			((0<<27)|(4<<24)|(0<<16)),	"CALL"),
+		RETURN(			((0<<27)|(4<<24)|(1<<16)),	"RETURN"),
+		BRANCH(			((0<<27)|(4<<24)|(2<<16)),	"BRANCH"),
+		U_BRANCH(		((0<<27)|(4<<24)|(3<<16)),	"U_BRANCH"),
+		JUMP(			((0<<27)|(4<<24)|(4<<16)),	"JUMP"),
+
+		SYSCALL(		((0<<27)|(5<<24)|(0<<16)),	"SYSCALL"),
+
+		// Fat Core
+		MUL(			((1<<27)|(2<<24)|(0<<16)),	"MUL"),
+		U_DIV(			((1<<27)|(2<<24)|(1<<16)),	"U_DIV"),
+		U_REM(			((1<<27)|(2<<24)|(2<<16)),	"U_REM"),
+		S_DIV(			((1<<27)|(2<<24)|(3<<16)),	"S_DIV"),
+		S_REM(			((1<<27)|(2<<24)|(4<<16)),	"S_REM"),
+
+		// Multicore
+		LOAD_L(			((2<<27)|(3<<24)|(0<<16)),	"LOAD_L"),
+		STORE_C(		((2<<27)|(3<<24)|(1<<16)),	"STORE_C"),
+		EM_LOAD(		((2<<27)|(3<<24)|(2<<16)),	"EM_LOAD"),
+		EM_STORE(		((2<<27)|(3<<24)|(3<<16)),	"EM_STORE"),
+		RA_LOAD(		((2<<27)|(3<<24)|(4<<16)),	"RA_LOAD"),
+		RA_STORE(		((2<<27)|(3<<24)|(5<<16)),	"RA_STORE"),
+
+		// Magic stack manipulation
+		MAGIC_GET(		((7<<27)|(0<<24)|(0<<16)),	"MAGIC_GET"),
+		MAGIC_SET(		((7<<27)|(0<<24)|(1<<16)),	"MAGIC_SET"),
+		
+		// Magic control flow
+		MAGIC_BRANCH(	((7<<27)|(4<<24)|(1<<16)),	"MAGIC_BRANCH"),
+		MAGIC_JUMP(		((7<<27)|(4<<24)|(2<<16)),	"MAGIC_JUMP"),
+		MAGIC_CALL(		((7<<27)|(4<<24)|(3<<16)),	"MAGIC_CALL");
+
+		private int encoding;
+		private String name;
+		
+		public String getName(){
+			return name;
+		}
+		
+		public int getEncoding(){
+			return encoding;
+		}
+		
+		private StackOP(int encoding, String name){
+			this.encoding = encoding;
+			this.name = name;
+		}
+
+		public static Dictionary<Integer, StackOP> encoding_map = null;
+		public static Dictionary<String, StackOP> name_map = null;
+
+		public static StackOP translate(int encoding){
+			if (null == encoding_map){
+				init_encoding_map();
+			}
+			
+			return encoding_map.get(encoding);
+		}
+
+		public static StackOP translate(String name){
+			if (null == name_map){
+				init_name_map();
+			}
+			
+			return name_map.get(name.toUpperCase());
+		}
+		
+		private static void init_encoding_map(){
+			encoding_map = new Hashtable<Integer, StackOP>();
+			
+			encoding_map.put(PUSH.getEncoding(), PUSH);
+			encoding_map.put(PULL.getEncoding(), PULL);
+			encoding_map.put(PULL_COPY.getEncoding(), PULL_COPY);
+			encoding_map.put(TUCK.getEncoding(), TUCK);
+			encoding_map.put(TUCK_COPY.getEncoding(), TUCK_COPY);
+			encoding_map.put(SWAP.getEncoding(), SWAP);
+			encoding_map.put(DROP.getEncoding(), DROP);
+			encoding_map.put(OVER.getEncoding(), OVER);
+			encoding_map.put(MOV.getEncoding(), MOV);
+			encoding_map.put(NOT.getEncoding(), NOT);
+			encoding_map.put(AND.getEncoding(), AND);
+			encoding_map.put(OR.getEncoding(), OR);
+			encoding_map.put(XOR.getEncoding(), XOR);
+			encoding_map.put(SLL.getEncoding(), SLL);
+			encoding_map.put(SRA.getEncoding(), SRA);
+			encoding_map.put(SRL.getEncoding(), SRL);
+			encoding_map.put(SET_HI.getEncoding(), SET_HI);
+
+			encoding_map.put(ADD.getEncoding(), ADD);
+			encoding_map.put(SUB.getEncoding(), SUB);
+			encoding_map.put(COMP_EQ.getEncoding(), COMP_EQ);
+			encoding_map.put(COMP_NE.getEncoding(), COMP_NE);
+			encoding_map.put(COMP_UGT.getEncoding(), COMP_UGT);
+			encoding_map.put(COMP_UGE.getEncoding(), COMP_UGE);
+			encoding_map.put(COMP_ULT.getEncoding(), COMP_ULT);
+			encoding_map.put(COMP_ULE.getEncoding(), COMP_ULE);
+			encoding_map.put(COMP_SGT.getEncoding(), COMP_SGT);
+			encoding_map.put(COMP_SGE.getEncoding(), COMP_SGE);
+			encoding_map.put(COMP_SLT.getEncoding(), COMP_SLT);
+			encoding_map.put(COMP_SLE.getEncoding(), COMP_SLE);
+
+			encoding_map.put(LOAD.getEncoding(), LOAD);
+			encoding_map.put(STORE.getEncoding(), STORE);
+
+			encoding_map.put(CALL.getEncoding(), CALL);
+			encoding_map.put(RETURN.getEncoding(), RETURN);
+			encoding_map.put(BRANCH.getEncoding(), BRANCH);
+			encoding_map.put(U_BRANCH.getEncoding(), U_BRANCH);
+			encoding_map.put(JUMP.getEncoding(), JUMP);
+
+			encoding_map.put(SYSCALL.getEncoding(), SYSCALL);
+
+			// Fat Core
+			encoding_map.put(MUL.getEncoding(), MUL);
+			encoding_map.put(U_DIV.getEncoding(), U_DIV);
+			encoding_map.put(U_REM.getEncoding(), U_REM);
+			encoding_map.put(S_DIV.getEncoding(), S_DIV);
+			encoding_map.put(S_REM.getEncoding(), S_REM);
+
+			// Multicore
+			encoding_map.put(LOAD_L.getEncoding(), LOAD_L);
+			encoding_map.put(STORE_C.getEncoding(), STORE_C);
+			encoding_map.put(EM_LOAD.getEncoding(), EM_LOAD);
+			encoding_map.put(EM_STORE.getEncoding(), EM_STORE);
+			encoding_map.put(RA_LOAD.getEncoding(), RA_LOAD);
+			encoding_map.put(RA_STORE.getEncoding(), RA_STORE);
+
+			// Magic stack manipulation
+			encoding_map.put(MAGIC_GET.getEncoding(), MAGIC_GET);
+			encoding_map.put(MAGIC_SET.getEncoding(), MAGIC_SET);
+			
+			// Magic control flow
+			encoding_map.put(MAGIC_BRANCH.getEncoding(), MAGIC_BRANCH);
+			encoding_map.put(MAGIC_JUMP.getEncoding(), MAGIC_JUMP);
+			encoding_map.put(MAGIC_CALL.getEncoding(), MAGIC_CALL);
+		}
+		
+		private static void init_name_map(){
+			name_map = new Hashtable<String, StackOP>();
+			
+			name_map.put(PUSH.getName(), PUSH);
+			name_map.put(PULL.getName(), PULL);
+			name_map.put(PULL_COPY.getName(), PULL_COPY);
+			name_map.put(TUCK.getName(), TUCK);
+			name_map.put(TUCK_COPY.getName(), TUCK_COPY);
+			name_map.put(SWAP.getName(), SWAP);
+			name_map.put(DROP.getName(), DROP);
+			name_map.put(OVER.getName(), OVER);
+			name_map.put(MOV.getName(), MOV);
+			name_map.put(NOT.getName(), NOT);
+			name_map.put(AND.getName(), AND);
+			name_map.put(OR.getName(), OR);
+			name_map.put(XOR.getName(), XOR);
+			name_map.put(SLL.getName(), SLL);
+			name_map.put(SRA.getName(), SRA);
+			name_map.put(SRL.getName(), SRL);
+			name_map.put(SET_HI.getName(), SET_HI);
+
+			name_map.put(ADD.getName(), ADD);
+			name_map.put(SUB.getName(), SUB);
+			name_map.put(COMP_EQ.getName(), COMP_EQ);
+			name_map.put(COMP_NE.getName(), COMP_NE);
+			name_map.put(COMP_UGT.getName(), COMP_UGT);
+			name_map.put(COMP_UGE.getName(), COMP_UGE);
+			name_map.put(COMP_ULT.getName(), COMP_ULT);
+			name_map.put(COMP_ULE.getName(), COMP_ULE);
+			name_map.put(COMP_SGT.getName(), COMP_SGT);
+			name_map.put(COMP_SGE.getName(), COMP_SGE);
+			name_map.put(COMP_SLT.getName(), COMP_SLT);
+			name_map.put(COMP_SLE.getName(), COMP_SLE);
+
+			name_map.put(LOAD.getName(), LOAD);
+			name_map.put(STORE.getName(), STORE);
+
+			name_map.put(CALL.getName(), CALL);
+			name_map.put(RETURN.getName(), RETURN);
+			name_map.put(BRANCH.getName(), BRANCH);
+			name_map.put(U_BRANCH.getName(), U_BRANCH);
+			name_map.put(JUMP.getName(), JUMP);
+
+			name_map.put(SYSCALL.getName(), SYSCALL);
+
+			// Fat Core
+			name_map.put(MUL.getName(), MUL);
+			name_map.put(U_DIV.getName(), U_DIV);
+			name_map.put(U_REM.getName(), U_REM);
+			name_map.put(S_DIV.getName(), S_DIV);
+			name_map.put(S_REM.getName(), S_REM);
+
+			// Multicore
+			name_map.put(LOAD_L.getName(), LOAD_L);
+			name_map.put(STORE_C.getName(), STORE_C);
+			name_map.put(EM_LOAD.getName(), EM_LOAD);
+			name_map.put(EM_STORE.getName(), EM_STORE);
+			name_map.put(RA_LOAD.getName(), RA_LOAD);
+			name_map.put(RA_STORE.getName(), RA_STORE);
+
+			// Magic stack manipulation
+			name_map.put(MAGIC_GET.getName(), MAGIC_GET);
+			name_map.put(MAGIC_SET.getName(), MAGIC_SET);
+			
+			// Magic control flow
+			name_map.put(MAGIC_BRANCH.getName(), MAGIC_BRANCH);
+			name_map.put(MAGIC_JUMP.getName(), MAGIC_JUMP);
+			name_map.put(MAGIC_CALL.getName(), MAGIC_CALL);
+		}
+	}
+}

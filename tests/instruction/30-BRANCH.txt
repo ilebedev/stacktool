@@ -1,0 +1,22 @@
+#Test Body:
+#============
+PUSH 1;
+BRANCH 1;		# over unreachable
+UNREACHABLE;
+PUSH 0;
+BRANCH -3;		# back to unreachable
+PUSH 0;			# is !0 TRUE? 
+SET_HI 0x8000;
+BRANCH 3;		#way over to 0xBEEF
+UNREACHABLE;
+SET_HI 0xDEAD;
+UNREACHABLE;	#HALT here on success
+PUSH 0xBEEF;
+PUSH 2;
+BRANCH -5;		#back to set_hi
+UNREACHABLE;
+#============
+#Test Result:
+#============
+#0xDEADBEEF
+#============

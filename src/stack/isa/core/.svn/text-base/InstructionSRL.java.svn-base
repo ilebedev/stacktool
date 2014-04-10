@@ -1,0 +1,33 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionSRL extends Instruction {
+	int imm16;
+	
+	public InstructionSRL(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.SRL, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.SRL, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Shift top item on the stack right by imm16.
+		// Do not preserve sign (logical shift)
+		// NOTE: Undefined behavior if imm16 > 32
+		int val = M.getStack(0).pop();
+		int result = val >>> imm16; // >> is ARITHMETIC shift in java!
+		M.getStack(0).push(result);
+	}
+}

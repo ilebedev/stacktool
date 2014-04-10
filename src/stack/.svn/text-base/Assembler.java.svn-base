@@ -1,0 +1,52 @@
+package stack;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import stack.isa.Instruction;
+import stack.simulator.gui.GUI;
+
+public class Assembler {
+	public static void main(String [ ] args){
+		ArrayList<String> instructionList = new ArrayList<String>();
+		
+		if (args.length < 1){
+			System.err.println("Input filename required!");
+			System.exit(1);
+		}
+		
+		String filename = args[0];
+		FileInputStream fs;
+		
+		try {
+			fs = new FileInputStream(filename);
+			DataInputStream in = new DataInputStream(fs);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String s;
+			while(null != (s = br.readLine())){
+				instructionList.add(s);
+			}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
+		String[] instructions = {};
+		Simulator sim = new Simulator(instructionList.toArray(instructions));
+		
+		for (Instruction inst : sim.getMachine().getProgram()){
+			//System.out.println(inst.toString());
+			System.out.println(String.format("0x%08X", inst.toBinary()));
+			//try {
+			//	System.out.println(Instruction.disassemble(inst.toBinary()).toString());
+			//} catch (Exception e) {
+			//	// TODO Auto-generated catch block
+			//	System.err.println("Something broke");
+			//}
+			//System.out.println();
+			//System.out.println();
+		}
+	}
+}

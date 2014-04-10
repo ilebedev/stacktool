@@ -1,0 +1,86 @@
+C_DIRECTORY="C:/projects/stack/test/c/emtest/"
+EM_DIRECTORY="/home/ilebedev/projects/Dropbox/stack_tool/tests/emra/EM_MODE/asm_for_rb/"
+RA_DIRECTORY="/home/ilebedev/projects/Dropbox/stack_tool/tests/emra/RA_MODE/asm_for_rb/"
+PRED_DIRECTORY="/home/ilebedev/projects/Dropbox/stack_tool/tests/emra/PRED_MODE/asm_for_rb/"
+LOCK_DIRECTORY="/home/ilebedev/projects/Dropbox/stack_tool/tests/lock/"
+
+#EM_DIRECTORY="C:/projects/Dropbox/stack_tool/tests/emra/EM_MODE/asm_for_rb/"
+#RA_DIRECTORY="C:/projects/Dropbox/stack_tool/tests/emra/RA_MODE/asm_for_rb/"
+#PRED_DIRECTORY="C:/projects/Dropbox/stack_tool/tests/emra/PRED_MODE/asm_for_rb/"
+#LOCK_DIRECTORY="C:/projects/Dropbox/stack_tool/tests/lock/"
+
+FRONTEND_COMMAND="C:/projects/stack/llvm-build/bin/Debug/clang.exe"
+BACKEND_COMMAND="C:/projects/stack/llvm-build/bin/Debug/llc.exe"
+R_COMMAND="C:/Program Files/R/R-2.15.2/bin/Rscript.exe"
+
+SRC_FILES = ["collab_counter/core0.asm", "collab_counter/core1.asm"]
+
+contextID = 0
+
+# Configure the simulation
+# 121-core system
+sim.configure(121)
+
+for SRC_FILE in SRC_FILES:
+    src = open(LOCK_DIRECTORY+SRC_FILE).read()
+    prog = asm.parse(src, "__core"+str(contextID))
+    #bin = asm.assemble(prog)
+    
+    print(prog)
+    
+    # call "__boot" with no args (placed at address 0)
+    print("Enabling context " + str(contextID))
+    sim.enableContext(contextID)
+	
+    # Load executable
+    #sim.load(bin)
+    sim.load(prog)
+    
+    # Reset this context to the right code segment
+    print("Enabling context " + str(contextID) + " to label \"" + "__core"+str(contextID) + "\"")
+    sim.reset(contextID, "__core"+str(contextID))
+    
+    # Increment context ID
+    contextID=contextID+1
+	
+
+# Initialize simulation
+sim.init()
+
+# Start traces
+for contextID in range(len(SRC_FILES)):
+    sim.startTrace(contextID)
+    sim.startMemTrace(contextID)
+    sim.startMigrationTrace(contextID)
+
+# Simulate up to 1000000 events
+sim.step(1000000)
+
+# Print results
+for contextID in range(len(SRC_FILES)):
+    trace = sim.getTrace(contextID)
+    memTrace = sim.getMemTrace(contextID)
+    migrationTrace = sim.getMigrationTrace(contextID)
+    
+    print("\n")
+    print("Instruction Trace, Context #" + str(contextID))
+    print(trace)
+    print("\n")
+    print("Memory Trace, Context #" + str(contextID))
+    print(memTrace)
+    print("\n")
+    print("Migration Trace, Context #" + str(contextID))
+    print(migrationTrace)
+    print("\n")
+
+# Check stack
+for contextID in range(len(SRC_FILES)):
+    print("Main stack contents for context #" + str(contextID))
+    sim.stack(contextID)
+    print("\n")
+
+# Check memory locations
+print("Memory")
+sim.allMem()
+print("\n")
+

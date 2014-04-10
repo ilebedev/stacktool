@@ -1,0 +1,32 @@
+package stack.isa.magic;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionMAGIC_JUMP extends Instruction {
+	String label;
+	
+	public InstructionMAGIC_JUMP(String label, String comment){
+		super(comment);
+		this.label = label;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.MAGIC_JUMP, label, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.MAGIC_JUMP, 0, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Get address from the labels table, jump there.
+		// Push return value to the stack
+		int address = M.getLabel(label);
+		
+		M.nPC = address;
+	}
+}

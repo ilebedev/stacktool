@@ -1,0 +1,126 @@
+package stack;
+
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class Simulator {
+	Machine M = new Machine();
+	
+	String filename;
+	ArrayList<Integer> breakpoints;
+	
+	// Populate program and labels (from string)
+	public Simulator(String[] asm_instructions){
+		ArrayList<String> labels = new ArrayList<String>();
+		breakpoints = new ArrayList<Integer>();
+		
+		for (int i=0; i<asm_instructions.length; i++){
+			String s = asm_instructions[i];
+			
+			// Remove whitespace lines
+			s = s.trim();
+			if (s.length() == 0){
+				// Whitespace
+				continue;
+			}
+			
+			// Try to interpert comment
+			Pattern pattern_comment = Pattern.compile("\\s*\\#.*", Pattern.CASE_INSENSITIVE);
+			Matcher comment_matcher = pattern_comment.matcher(s);
+			
+			// Try to interpret label
+			Pattern pattern_label = Pattern.compile("\\s*(@[\\._\\~A-Z]+)", Pattern.CASE_INSENSITIVE);
+			Matcher label_matcher = pattern_label.matcher(s);
+			
+			if (comment_matcher.matches()){
+				// ignore comment
+				continue;
+			} else if (label_matcher.matches()){
+				// instruction with no arguments
+				String label = label_matcher.group(1);
+				labels.add(label);
+			} else {
+			// Try to interpret instruction
+				try {
+					Instruction instruction = Instruction.disassemble(s);
+					
+					// This is indeed an instruction. Add it.
+					int address = M.addInstruction(instruction);
+					// Apply all outstanding labels to this instruction
+					for (String label : labels){
+						M.addLabel(label, address);
+					}
+					labels.clear();
+				} catch (Exception e) {
+					System.err.print("STRING: \"" + s + "\"\n");
+					e.printStackTrace();
+					// Not an instruction. Ignore.
+				}
+			}
+			
+			// NOTE: This loop uses continue, this point may not always be reached
+		}
+		
+		M.reset(0);
+	}
+	
+	// Populate program (from binary). There are no labels
+	public Simulator(int[] binary_instructions){
+		for (int b : binary_instructions){
+			try {
+				Instruction instruction = Instruction.disassemble(b);
+				M.addInstruction(instruction);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		M.reset(0);
+	}
+	
+	// Breakpoints interface
+	public void addBreakpoint(int address){
+		breakpoints.add(address);
+	}
+	
+	public void removeBreakpoint(int address){
+		breakpoints.remove(new Integer(address));
+	}
+	
+	// Simulator interaction
+	public void step(){
+		M.getCurrentInstruction().execute(M);
+		M.step();
+	}
+	
+	public void run(int steps){
+		for (int i=0; i<steps; i++){
+			if (breakpoints.contains(M.getPC())){
+				break;
+			}
+			step();
+		}
+	}
+	
+	public void run(){
+		while (!breakpoints.contains(M.getPC())){
+			step();
+		}
+	}
+	
+	public Machine getMachine(){
+		return M;
+	}
+	
+	public String getFilename(){
+		return filename;
+	}
+	
+	public boolean isRunning(){
+		return M.getEnable();
+	}
+}

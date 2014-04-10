@@ -1,0 +1,55 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 0;
+MUL;
+
+PUSH 0;
+PUSH 1;
+MUL;
+
+PUSH 1;
+PUSH 1;
+MUL;
+
+PUSH -1;
+PUSH -1;
+MUL;
+
+PUSH -1;
+PUSH 1;
+MUL;
+
+PUSH 4;
+PUSH 4;
+MUL;
+
+PUSH 10;
+PUSH 5;
+MUL;
+
+PUSH 0;
+SET_HI 0x8000;
+PUSH 2;
+MUL;
+
+PUSH 2;
+PUSH 8;
+SET_HI 0x8000;
+MUL;
+
+# todo: negative
+
+#============
+#Test Result:
+#============
+#0x00000010 = 16
+#0x00000000
+#0x00000032 = 50
+#0x00000010 = 16
+#0xFFFFFFFF
+#0x00000001
+#0x00000001
+#0x00000000
+#0x00000000
+#============

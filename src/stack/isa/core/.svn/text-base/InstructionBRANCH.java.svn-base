@@ -1,0 +1,34 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionBRANCH extends Instruction {
+	int imm16;
+	
+	public InstructionBRANCH(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.BRANCH, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.BRANCH, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// conditional branch
+		boolean condition = (0 != M.getStack(0).pop());
+		
+		if (condition){
+			M.nPC = M.nPC + M.signExtend(16, imm16);
+		}
+		// NOTE: POORLY DEFINED! TRUE = !FALSE, FALSE = 0. BOOLEAN VALUES ARE OUTPUTS OF COMPARISONS, UNDEFINED (can use lowest bit for test?)
+	}
+}

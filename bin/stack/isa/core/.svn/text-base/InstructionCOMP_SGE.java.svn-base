@@ -1,0 +1,30 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionCOMP_SGE extends Instruction {
+	
+	public InstructionCOMP_SGE(String comment){
+		super(comment);
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.COMP_SGE, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.COMP_SGE, 0, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Push signed >= of 1st and 2nd item on stack
+		int lhs = M.getStack(0).pop();
+		int rhs = M.getStack(0).pop();
+		int result = (lhs >= rhs) ? 1: 0;
+		M.getStack(0).push(result);
+	}
+}

@@ -1,0 +1,34 @@
+#Test Body:
+#============
+PUSH 12345;
+PUSH 12345;
+ADD;
+PUSH -23456;
+ADD;
+PUSH 0;
+ADD;
+PUSH -1234;
+ADD;
+PUSH 0;
+ADD;
+PUSH 12345;
+ADD;
+PUSH -23456;
+ADD;
+
+# -0x215215AA
+PUSH 0x15AA;
+SET_HI 0x2152;
+NOT;
+PUSH 1;
+ADD;	
+
+ADD;
+PUSH 0;
+ADD;
+
+#Test Result:
+#============
+#0xDEADBEEF
+#============
+

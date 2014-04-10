@@ -1,0 +1,31 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionMOV extends Instruction {
+	int imm8_hi;
+	int imm8_lo;
+	
+	public InstructionMOV(int imm8_hi, int imm8_lo, String comment){
+		super(comment);
+		this.imm8_hi = imm8_hi;
+		this.imm8_lo = imm8_lo;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.MOV, imm8_hi, imm8_lo, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.MOV, 0, imm8_hi, imm8_lo);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Move top value from stack # imm8_hi to stack # imm8_lo
+		M.getStack(imm8_lo).push(M.getStack(imm8_hi).pop());
+	}
+}

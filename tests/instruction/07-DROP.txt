@@ -1,0 +1,19 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 1;
+PUSH 2;
+PUSH 3;
+PUSH 4;
+PUSH 5;
+DROP 0;
+DROP 0;
+DROP 3;
+DROP 1;
+HALT;
+#============
+#Test Result:
+#============
+#0x00000003
+#0x00000001
+#============

@@ -1,0 +1,19 @@
+#Test Body:
+#============
+CALL_RELATIVE 1;
+UNREACHABLE;
+CALL_RELATIVE 4;
+UNREACHABLE;
+PUSH 0xBEEF;
+SET_HI 0xDEAD;
+UNREACHABLE;
+CALL_RELATIVE -4;
+UNREACHABLE;
+#============
+#Test Result:
+#============
+#0xDEADBEEF
+#0x00000008
+#0x00000003
+#0x00000001
+#============

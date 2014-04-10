@@ -1,0 +1,30 @@
+package stack.isa.magic;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionMAGIC_GET extends Instruction {
+	String label;
+	
+	public InstructionMAGIC_GET(String label, String comment){
+		super(comment);
+		this.label = label;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.MAGIC_GET, label, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.MAGIC_GET, 0, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Push a value from the magic table at label
+		int value = M.magicGet(label);
+		M.getStack(0).push(value);
+	}
+}

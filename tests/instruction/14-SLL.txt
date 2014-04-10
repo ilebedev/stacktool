@@ -1,0 +1,19 @@
+#Test Body:
+#============
+PUSH 0;
+SLL 16;
+PUSH 8;
+SLL 1;
+PUSH -1;
+SLL 16;
+PUSH 0xFFF;
+SET_HI 0x7FF;
+SLL 31;
+#============
+#Test Result:
+#============
+#0x80000000
+#0xFFFF0000
+#0x00000010 = 16
+#0x00000000
+#============

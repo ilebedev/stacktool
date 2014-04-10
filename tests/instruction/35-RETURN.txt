@@ -1,0 +1,21 @@
+#Test Body:
+#============
+PUSH 0xBEEF;
+SET_HI 0xDEAD;
+PUSH 7;
+CALL;
+PUSH 0xBA11;
+SET_HI 0xBA5E;
+UNREACHABLE;
+PUSH 0xCAFE;
+SET_HI 0x0BAD;
+PULL 1;
+RETURN;
+UNREACHABLE;
+#============
+#Test Result:
+#============
+#0xBA5EBA11
+#0x0BADCAFE
+#0xDEADBEEF
+#============

@@ -1,0 +1,28 @@
+#Test Body:
+#============
+PUSH 0xBEEF;
+SET_HI 0xDEAD;
+
+PUSH 0;
+PULL_COPY 1;
+SUB;
+
+PULL_COPY 0;
+PULL 2;
+SUB;
+
+PUSH 0x00F1;
+PUSH 0x00F0;
+SUB;
+
+PUSH 1;
+PUSH 0;
+SUB;
+
+#Test Result:
+#============
+#0xFFFFFFFF
+#0xFFFFFFFF
+#0x00000000
+#0xDEADBEEF
+#============

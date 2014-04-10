@@ -1,0 +1,24 @@
+#Test Body:
+#============
+#0x148994A3
+PUSH 0x94A3;
+SETHI 0x1489;
+#NOTE: sethi
+#0xCA242A4C
+PUSH 0x2A4C;
+SETHI 0xCA24;
+BOR;
+#0xF0F0F0F0
+PUSH 0xF0F0;
+SETHI 0xF0F0;
+#0x0F0F0F0F
+PUSH 0x0F0F;
+SETHI 0x0F0F;
+BOR;
+HALT;
+#============
+#Test Result:
+#============
+#0xFFFFFFFF
+#0xDEADBEEF
+#============

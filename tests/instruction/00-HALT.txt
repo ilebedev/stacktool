@@ -1,0 +1,8 @@
+#Test Body:
+#============
+HALT;
+#============
+#Test Result:
+#============
+#(exception on UNREACHABLE)
+#============

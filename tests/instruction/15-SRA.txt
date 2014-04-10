@@ -1,0 +1,19 @@
+#Test Body:
+#============
+PUSH 0;
+SRA 16;
+PUSH 8;
+SRA 1;
+PUSH -1;
+SRA 16;
+PUSH 0xFFFF;
+SET_HI 0x8000;
+SRA 31;
+#============
+#Test Result:
+#============
+#0xFFFFFFFF
+#0xFFFFFFFF
+#0x00000004
+#0x00000000
+#============

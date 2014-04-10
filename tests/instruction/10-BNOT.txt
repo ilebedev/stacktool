@@ -1,0 +1,13 @@
+#Test Body:
+#============
+PUSH 0;
+BNOT;
+PUSH -1;
+BNOT;
+HALT;
+#============
+#Test Result:
+#============
+#0x00000000
+#0xFFFFFFFF
+#============

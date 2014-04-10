@@ -1,0 +1,31 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionSET_HI extends Instruction {
+	int imm16;
+	
+	public InstructionSET_HI(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.SET_HI, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.SET_HI, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// set top 16 bits of the top item on the stack to imm16.
+		int val = M.getStack(0).pop();
+		int result = (imm16 << 16) | (val & 0xFFFF);
+		M.getStack(0).push(result);
+	}
+}

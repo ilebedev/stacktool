@@ -1,0 +1,42 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 0;
+COMP_NE;
+
+PUSH 0;
+PUSH 1;
+COMP_NE;
+
+PUSH 1;
+PUSH 0;
+COMP_NE;
+
+PUSH 0xDEF0;
+SET_HI 0x8ABC;
+PUSH 0xDEF0;
+SET_HI 0x8ABC;
+COMP_NE;
+
+PUSH 0xDEF0;
+SET_HI 0x8ABC;
+PUSH 0xDEF0;
+SET_HI 0x9ABC;
+COMP_NE;
+
+PUSH 0xDEF0;
+SET_HI 0x9ABC;
+PUSH 0xDEF0;
+SET_HI 0x8ABC;
+COMP_NE;
+
+#============
+#Test Result:
+#============
+#0x00000001
+#0x00000001
+#0x00000000
+#0x00000001
+#0x00000001
+#0x00000000
+#============

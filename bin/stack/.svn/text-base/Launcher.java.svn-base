@@ -1,0 +1,32 @@
+package stack;
+import java.io.*;
+import java.util.ArrayList;
+
+import stack.simulator.gui.GUI;
+
+
+public final class Launcher {
+	public static void main(String [ ] args){
+		ArrayList<String> instructionList = new ArrayList<String>();
+		
+		String filename = "asm.s";		
+		FileInputStream fs;
+		
+		try {
+			fs = new FileInputStream(filename);
+			DataInputStream in = new DataInputStream(fs);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String s;
+			while(null != (s = br.readLine())){
+				instructionList.add(s);
+			}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
+		String[] instructions = {};
+		Simulator sim = new Simulator(instructionList.toArray(instructions));
+		
+		GUI gui = new GUI(sim);
+	}
+}

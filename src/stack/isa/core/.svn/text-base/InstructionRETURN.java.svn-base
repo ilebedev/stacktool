@@ -1,0 +1,32 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionRETURN extends Instruction {
+	
+	public InstructionRETURN(String comment){
+		super(comment);
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.RETURN, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.RETURN, 0, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// jump to address = top of stack.
+		int address = M.getStack(0).pop();
+		
+		M.nPC = address;
+		
+		// Pop magic stack frame
+		M.pop_magic_frame();
+	}
+}

@@ -1,0 +1,65 @@
+TEST #	INSTRUCTION		TEST STATUS (SIM)		COMMENTS
+=========================================================
+00		HALT			OK
+01		PUSH			OK
+02		PULL			OK
+03		PULL_CP			OK
+04		TUCK			OK
+05		TUCK_CP			OK
+06		SWAP			OK
+07		DROP			OK
+08		AUX				OK						# tests AUX2MAIN, AUX2MAIN_CP, MAIN2AUX, MAIN2AUX_CP
+09		SETHI			OK
+10		BNOT			OK
+11		BAND			OK
+12		BOR				OK
+13		BXOR			OK
+14		LNOT			
+15		LAND			
+16		LOR				
+
+				
+14		SLL				
+15		SRA				
+16		SRL				
+17		ADD				
+18		SUB				
+19		COMP_EQ			
+20		COMP_NE			
+21		COMP_UGT		
+22		COMP_UGE		
+23		COMP_ULT		
+24		COMP_ULE		
+25		COMP_SGT		
+26		COMP_SGE		
+27		COMP_SLT		
+28		COMP_SLE		
+29		MUL										TODO: what happens upon saturation? Something ought to..	
+30		BRANCH			
+31		JUMP			
+32		JUMP_RELATIVE	
+33		CALL			
+34		CALL_RELATIVE	
+35		RETURN			
+36		STORE			
+37		LOAD			
+		
+		LOAD_L			
+		STORE_C		
+		
+		EM_LOAD			
+		EM_STORE		
+		RA_LOAD			
+		RA_STORE
+		
+		SIR_PUSH
+		SIR_LOAD		
+		SIR_STORE
+		SIR_ALLOCA		
+		SIR_BRANCH_IF	
+		SIR_JUMP		
+		SIR_CALL		
+		SIR_LIB_CALL
+		
+		
+		

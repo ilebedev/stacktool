@@ -1,0 +1,18 @@
+#Test Body:
+#============
+JUMP_RELATIVE 1;
+UNREACHABLE;
+PUSH 1;
+JUMP_RELATIVE 3;
+UNREACHABLE;
+SET_HI 0xDEAD;
+UNREACHABLE;
+PUSH 0xBEEF;
+JUMP_RELATIVE -4;
+UNREACHABLE;
+#============
+#Test Result:
+#============
+#0xDEADBEEF
+#0x00000001
+#============

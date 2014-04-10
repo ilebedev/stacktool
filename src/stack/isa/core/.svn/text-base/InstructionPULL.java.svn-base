@@ -1,0 +1,29 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionPULL extends Instruction {
+	int imm16;
+	
+	public InstructionPULL(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.PULL, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.PULL, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		int var = M.getStack(0).remove(imm16);
+		M.getStack(0).push(var);
+	}
+}

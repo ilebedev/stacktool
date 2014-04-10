@@ -1,0 +1,26 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 0;
+PUSH 1;
+PUSH 1;
+PUSH 2;
+PUSH 2;
+PUSH 0xBEEF;
+SET_HI 0xDEAD;
+PUSH 3;
+STORE;
+STORE;
+STORE;
+STORE;
+#============
+#Test Result:
+#============
+# (empty stacks)
+# ----
+# Memory contents:
+# 0 : 0
+# 1 : 1
+# 2 : 2
+# 3 : 0xDEADBEEF
+#============

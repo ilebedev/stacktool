@@ -1,0 +1,5 @@
+package stack.compiler;
+
+public class CostFunction {
+
+}

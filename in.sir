@@ -1,0 +1,47 @@
+MODULE module{
+		CONSTANTS_TABLE{
+			EXPRESSION () -> (5){	#Integer constant (1)
+				PUSH 1;
+			}
+			EXPRESSION () -> (10){	#Integer constant (-1)
+				PUSH -1;
+			}
+		}
+	FUNCTION 1 (3) factorial (2){
+		BASIC_BLOCK @BB_factorial_entry[]{
+			EXPRESSION (2, 5) -> (4){	#Signed > comparison
+				COMP_SGT;
+			}
+			EXPRESSION (4) -> (){	#branch
+				SIR_BRANCH @BB_factorial_if.then;
+				SIR_JUMP @BB_factorial_return;
+			}
+		}
+		BASIC_BLOCK @BB_factorial_if.then[
+			@BB_factorial_entry:(<2->7>, <5->9>),
+			@BB_factorial_if.then:(<6->7>, <8->9>)
+		]{
+			EXPRESSION (7, 10) -> (6){	#Addition
+				ADD;
+			}
+			EXPRESSION (7, 9) -> (8){	#Multiplication
+				MUL;
+			}
+			EXPRESSION (6, 5) -> (11){	#Signed > comparison
+				COMP_SGT;
+			}
+			EXPRESSION (11) -> (){	#branch
+				SIR_BRANCH @BB_factorial_if.then;
+				SIR_JUMP @BB_factorial_return;
+			}
+		}
+		BASIC_BLOCK @BB_factorial_return[
+			@BB_factorial_entry:(<5->12>),
+			@BB_factorial_if.then:(<8->12>)
+		]{
+			EXPRESSION (1, 12) -> (){	#return
+				J_ABS;
+			}
+		}
+	}
+}

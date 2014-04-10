@@ -1,0 +1,6 @@
+package stack.ir;
+
+public class BasicBlock {
+	//dag
+	//terminal instruction
+}

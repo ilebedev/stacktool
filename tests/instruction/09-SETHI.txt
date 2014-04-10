@@ -1,0 +1,19 @@
+#Test Body:
+#============
+PUSH 0;
+SETHI 0;
+PUSH 1;
+SETHI 0;
+PUSH 65535;
+SETHI 65535;
+PUSH -1;
+SETHI 255;
+HALT;
+#============
+#Test Result:
+#============
+#0x00FFFFFF
+#0xFFFFFFFF
+#0x00000001
+#0x00000000
+#============

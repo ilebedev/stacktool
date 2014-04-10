@@ -1,0 +1,32 @@
+package stack.isa.core;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionSWAP extends Instruction {
+	int imm16;
+	
+	public InstructionSWAP(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.SWAP, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.SWAP, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// Swap the value at the top of the stack
+		int val1 = M.getStack(0).at(0);
+		int val2 = M.getStack(0).at(imm16);
+		M.getStack(0).set(0, val2);
+		M.getStack(0).set(imm16, val1);
+	}
+}

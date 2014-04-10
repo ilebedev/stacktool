@@ -1,0 +1,31 @@
+package stack.isa.multicore;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionLOAD_L extends Instruction {
+	int imm16;
+	
+	public InstructionLOAD_L(int imm16, String comment){
+		super(comment);
+		this.imm16 = imm16;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.LOAD_L, imm16, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.LOAD_L, imm16, 0, 0);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// load at address = top of the stack
+		int addr = M.signExtend(16, imm16) + M.getStack(0).pop();
+		int result = M.load(addr);
+		M.getStack(0).push(result);
+	}
+}

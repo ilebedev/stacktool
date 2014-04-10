@@ -1,0 +1,31 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 0;
+PUSH 1;
+PUSH 1;
+PUSH 2;
+PUSH 2;
+PUSH 0xBEEF;
+SET_HI 0xDEAD;
+PUSH 3;
+STORE;
+STORE;
+STORE;
+STORE;
+PUSH 0;
+LOAD;
+PUSH 1;
+LOAD;
+PUSH 2;
+LOAD;
+PUSH 3;
+LOAD;
+#============
+#Test Result:
+#============
+# 0xDEADBEEF
+# 0x00000002
+# 0x00000001
+# 0x00000000
+#============

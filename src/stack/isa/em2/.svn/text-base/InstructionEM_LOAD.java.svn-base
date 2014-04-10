@@ -1,0 +1,33 @@
+package stack.isa.multicore;
+
+import stack.isa.Instruction;
+import stack.machine.Machine;
+
+public class InstructionEM_LOAD extends Instruction {
+	int imm8_hi;
+	int imm8_lo;
+	
+	public InstructionEM_LOAD(int imm8_hi, int imm8_lo, String comment){
+		super(comment);
+		this.imm8_hi = imm8_hi;
+		this.imm8_lo = imm8_lo;
+	}
+	
+	@Override
+	public String toString() {
+		return get_string(StackOP.EM_LOAD, imm8_hi, imm8_lo, getComment());
+	}
+
+	@Override
+	public int toBinary() {
+		return assemble(StackOP.EM_LOAD, 0, imm8_hi, imm8_lo);
+	}
+
+	@Override
+	public void execute(Machine M) {
+		// load at address = top of the stack
+		int addr = M.signExtend(8, imm8_lo) + M.getStack(0).pop();
+		int result = M.load(addr);
+		M.getStack(0).push(result);
+	}
+}

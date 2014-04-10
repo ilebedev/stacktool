@@ -1,0 +1,19 @@
+#Test Body:
+#============
+PUSH 0;
+PUSH 1;
+PUSH 2;
+TUCK 0;
+TUCK 0;
+TUCK 0;
+TUCK 0;
+TUCK 2;
+TUCK 1;
+HALT;
+#============
+#Test Result:
+#============
+#0x00000000
+#0x00000001
+#0x00000002
+#============
