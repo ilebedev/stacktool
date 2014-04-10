@@ -1,5 +1,0 @@
-package stack.ir;
-
-public class Expression {
-	//list of instructions
-}
