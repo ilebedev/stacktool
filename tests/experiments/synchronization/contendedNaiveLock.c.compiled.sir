@@ -1,0 +1,38 @@
+36 instructions in 1 segments;
+main:	36 instructions
+DROP 0x1;	#var: 2
+DROP 0x1;	#var: 3
+PUSH 0x0;	
+PUSH -0x6000;	
+SIR_STORE;	
+PUSH 0x0;	
+PULL 0x1;	#var: 1
+J_PC 0x1;	#to : @BB_main_while.cond.preheader # 
+J_PC 0x1;	#to : @BB_main_while.cond # 
+PULL 0x1;	#var: 8
+PUSH 0x0;	
+PUSH -0x6000;	
+SIR_CALL stackEmLock_acquire_naive;	
+CMP_EQ;	
+BZ 0x3;	#branch to false path, leading to @BB_main_while.end
+PULL 0x1;	#var: 1
+J_PC -0x7;	#to @BB_main_while.cond # 
+J_PC 0x1;	#to @BB_main_while.end # 
+PUSH -0x6000;	
+SIR_CALL stackEmLock_release;	
+PUSH 0x1;	
+PULL 0x1;	#var: 8
+ADD;	
+PUSH 0xa;	
+PULL 0x1;	#var: 7
+TUCK_CP 0x1;	#var: 7
+CMP_EQ;	
+PULL 0x2;	#var: 1
+TUCK 0x1;	#var: 1
+BZ 0x3;	#branch to false path, leading to @BB_main_while.cond.preheader
+DROP 0x1;	#var: 7
+J_PC 0x2;	#to @BB_main_for.end # 
+J_PC -0x18;	#to @BB_main_while.cond.preheader # 
+PUSH 0x0;	
+PULL 0x1;	#var: 1
+J;	

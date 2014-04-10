@@ -1,0 +1,166 @@
+
+# return stack list in the function declaration is only for counting
+# and the exact variables are never used
+
+#FUNCTION <return address variable> (<return stack>) <name> (<argument stack>){
+#   ...
+#}
+
+# 
+MODULE module{
+		CONSTANTS_TABLE{
+			EXPRESSION () -> (100){	#Constant 0
+				PUSH 0;
+			}
+		}
+	
+	#void stackEmLock_allocate(int lockAddress);
+	# return address: 99
+	# lock address: 11
+	#
+	# To allocate a lock, release it (write 0 to the location):
+	FUNCTION 99 () stackEmLock_allocate (11){
+		BASIC_BLOCK @BB_stackEmLock_allocate[]{
+			EXPRESSION (11) -> (){	#Lock set initial to 0
+				SIR_CALL stackEmLock_release;
+			}
+			
+			EXPRESSION (99) -> (){	#return
+				J;
+			}
+		}
+	}
+	
+	#void stackEmLock_release(int lockAddress);
+	# return address: 199
+	# lock address: 111
+	# constant 0 : 100
+	#
+	# To release a lock, simply send a no-ack remote store to its location:
+	FUNCTION 199 () stackEmLock_release (111){
+		BASIC_BLOCK @BB_stackEmLock_release[]{
+			EXPRESSION (111, 100) -> (){	#Lock release
+				FNC_ST_RA_NOACK 0;
+			}
+			
+			EXPRESSION (199) -> (){	#return
+				J;
+			}
+		}
+	}
+	
+	#bool stackEmLock_test(int lockAddress);
+	# return address: 299
+	# lock address: 211
+	# lock value: 222
+	# 
+	# To test the lock, remote load and return the value of the lock
+	FUNCTION 299 (222) stackEmLock_test (211){
+		BASIC_BLOCK @stackEmLock_test[]{
+			EXPRESSION (211) -> (222){	#Lock test
+				FNC_LD_RA 0;
+			}
+			
+			EXPRESSION (299, 222) -> (){	#return
+				J;
+			}
+		}
+	}
+
+	#bool stackEmLock_acquire(int lockAddress);
+	# return address: 399
+	# lock address: 311
+	# lock value: 322
+	#
+	# if (stackEmLock_test){
+	#   --- critical section
+	#    if (lock)
+	#      lock = true
+	#      return true
+	#    else
+	#      return false
+	#   --- end critical section
+	# else return false
+	
+	FUNCTION 399 (322) stackEmLock_acquire (311){
+		BASIC_BLOCK @stackEmLock_acquire[]{
+			EXPRESSION (399, 311) -> (){
+				MAIN2AUX;		# 	2[ra]
+				
+				PULL_CP 0;		#[a,a]
+				PULL_CP 0;		#[a,a,a]
+				FNC_LD_RA 0;	#[v,a,a]
+				
+				BNZ 9;			#@end_outer.
+				# available remotely	[a,a]
+				# Migrate, try to reserve.
+				
+				FNC_LD_RSV_EM 0 2 0;	#[v,a]
+				BNZ 8;	#@end_inner	 
+				# available locally, reserved.
+				# lock
+				PUSH 1;			#[1, a]
+				PULL 1;			#[a, 1]
+				ST 0;  #FNC_ST_COND_EM 0;
+				# return result (1 if success, 0 otherwise)
+				PUSH 1;
+				
+				AUX2MAIN;
+				J;
+				
+				#- @end_outer [a,a]
+				DROP 0;
+				#- @end_inner [a]
+				DROP 0;
+				PUSH 0;
+				AUX2MAIN;
+				J;
+			}
+		}
+	}
+	
+	#bool stackEmLock_acquire_naive(int lockAddress);
+	# return address: 499
+	# lock address: 411
+	# lock value: 422
+	#
+	# if (stackEmLock_test){
+	#   --- critical section
+	#    if (lock)
+	#      lock = true
+	#      return true
+	#    else
+	#      return false
+	#   --- end critical section
+	# else return false
+	
+	FUNCTION 499 (422) stackEmLock_acquire_naive (411){
+		BASIC_BLOCK @stackEmLock_acquire[]{
+			EXPRESSION (499, 411) -> (){
+				MAIN2AUX;		# 	2[ra]
+				
+				PULL_CP 0;		#[a,a]
+				FNC_LD_RSV_EM 0 2 0;	#[v,a]
+				
+				BNZ 6;	#@end #[a]
+				# available locally, reserved.
+				# lock
+				PUSH 1;			#[1, a]
+				PULL 1;			#[a, 1]
+				ST 0; #FNC_ST_COND_EM 0;	#[]
+				# return result (1 if success, 0 otherwise)
+				
+				PUSH 1;
+				
+				AUX2MAIN;
+				J;
+				
+				#- @end [a]
+				DROP 0;
+				PUSH 0;
+				AUX2MAIN;
+				J;
+			}
+		}
+	}
+}

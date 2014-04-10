@@ -1,0 +1,112 @@
+import subprocess
+
+# Library:
+def runProcess(exe):
+  p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  while(True):
+    retcode = p.poll() #returns None while subprocess is running
+    line = p.stdout.readline()
+    yield line
+    if(retcode is not None):
+      break
+
+C_DIRECTORY="synchronization/"
+LL_DIRECTORY="synchronization/"
+SIR_DIRECTORY="synchronization/"
+ASM_DIRECTORY="synchronization/"
+
+FRONTEND_COMMAND="U:/projects/stack/frontend/bin/Debug/clang.exe"
+LINKER_COMMAND="U:/projects/stack/frontend/bin/Debug/llvm-link.exe"
+BACKEND_COMMAND="U:/projects/stack/frontend/bin/Debug/llc.exe"
+#R_COMMAND="C:/Program Files/R/R-2.15.2/bin/Rscript.exe"
+
+OUTPUT_NAME="contendedNaiveLock"
+SRC_FILE = "contendedNaiveLock.c"
+LIB_FILES = ["../lib/lock.sir", "../lib/em2.sir"]
+
+# Configure the simulation
+
+linker_inputs = ""
+
+# Compile C files
+
+# run front-end
+print("RUNNING FRONT-END ON \"")
+print(SRC_FILE)
+print("\"\n")
+for line in runProcess(FRONTEND_COMMAND+" -target stack -S -emit-llvm -O1 -o " + LL_DIRECTORY + SRC_FILE + ".llvm " + C_DIRECTORY + SRC_FILE):
+  print(line)  
+linker_inputs = linker_inputs + " " + LL_DIRECTORY + SRC_FILE + ".llvm"
+
+# Link LLVM	
+print "LINKING SOURCE FILES"
+for line in runProcess(LINKER_COMMAND+" -S -o " + LL_DIRECTORY + SRC_FILE+".linked.llvm " + linker_inputs):
+  print(line)
+
+# Run backend on linked source files
+print("RUNNING LLVM->SIR TRANSLATION")
+for line in runProcess(BACKEND_COMMAND +" -march=stack -O3 -o " + SIR_DIRECTORY + SRC_FILE+".sir " + LL_DIRECTORY + SRC_FILE+".linked.llvm "):
+  print(line)
+
+# Read in the stack intermediate file for scheduling
+print("READING SIR FILE")
+f=open(SIR_DIRECTORY + SRC_FILE+".sir");
+src = f.read()
+f.close()
+
+# Parse the stack intermediate file
+print("PARSING SIR FILE")
+src_module = sir.parse(src)
+
+#Schedule
+print("SCHEDULING STACK CODE")
+prog_compiled = compiler.compile(src_module)
+print(prog_compiled)
+
+## COMPILER IS NOW DONE
+print("WRITING COMPILED SIR")
+f=open(SIR_DIRECTORY + SRC_FILE+".compiled.sir", "w");
+f.write(str(prog_compiled))
+f.close()
+
+## Link the sir to library asms
+print("LINKING LIBRARY FILES")
+for LIB_FILE in LIB_FILES:
+  print("READING LIBRARY : \"" + LIB_FILE + "\"")
+  f=open(SIR_DIRECTORY + LIB_FILE);
+  libsrc = f.read()
+  f.close()
+  print("PARSING LIBRARY : \"" + LIB_FILE + "\"")
+  libprog = sir.parse(libsrc)
+  print(libprog)
+  print("COMPILING LIBRARY : \"" + LIB_FILE + "\", if needed")
+  libprog = compiler.compile(libprog)
+  print("LINKING LIBRARY : \"" + LIB_FILE + "\"")
+  prog_compiled = linker.link(prog_compiled, libprog)
+  print("...ok\n")
+
+## Link the resulting stack sir
+print("CREATING BOOT RECORD")
+boot_program = linker.createBoot()
+
+print("LINKING BOOT RECORD")
+prog_executable = linker.link(prog_compiled, boot_program)
+linker.fixGlobalsTermination(prog_executable)
+
+## STACK LINIKER IS NOW DONE
+print("WRITING EXECUTABLE")
+f=open(SIR_DIRECTORY + SRC_FILE+".exe.sir", "w");
+f.write(str(prog_executable))
+f.close()
+
+print("... ASSEMBLING ...")
+# TODO: Replace illegal opcodes
+c = asm.collapse(prog_executable)
+cL = asm.legalizeInstructions(c)
+#a = asm.assemble(cL)
+
+print("... WRITING ASM ...")
+f=open(ASM_DIRECTORY + OUTPUT_NAME+".asm", "w");
+f.write(str(cL).lower())
+f.close()
+print("... DONE ...")

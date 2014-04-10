@@ -1,0 +1,35 @@
+; ModuleID = 'synchronization/contendedNaiveLock.c'
+target datalayout = "e-p:32:32:32-i32:32:32-i16:32:32-i8:32:32-n32-u32"
+target triple = "stack"
+
+define i32 @main(i32 %argc, i32** nocapture %argv) nounwind {
+entry:
+  store i32 0, i32* inttoptr (i32 40960 to i32*), align 8192, !tbaa !0
+  br label %while.cond.preheader
+
+while.cond.preheader:                             ; preds = %while.end, %entry
+  %i.04 = phi i32 [ 0, %entry ], [ %inc, %while.end ]
+  br label %while.cond
+
+while.cond:                                       ; preds = %while.cond.preheader, %while.cond
+  %call = tail call i32 @stackEmLock_acquire_naive(i32* inttoptr (i32 40960 to i32*)) nounwind
+  %lnot = icmp eq i32 %call, 0
+  br i1 %lnot, label %while.cond, label %while.end
+
+while.end:                                        ; preds = %while.cond
+  tail call void @stackEmLock_release(i32* inttoptr (i32 40960 to i32*)) nounwind
+  %inc = add nsw i32 %i.04, 1
+  %exitcond = icmp eq i32 %inc, 10
+  br i1 %exitcond, label %for.end, label %while.cond.preheader
+
+for.end:                                          ; preds = %while.end
+  ret i32 0
+}
+
+declare i32 @stackEmLock_acquire_naive(i32*)
+
+declare void @stackEmLock_release(i32*)
+
+!0 = metadata !{metadata !"int", metadata !1}
+!1 = metadata !{metadata !"omnipotent char", metadata !2}
+!2 = metadata !{metadata !"Simple C/C++ TBAA"}

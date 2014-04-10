@@ -1,0 +1,114 @@
+92 instructions in 11 segments;
+stackEM_getThreadID:	3 instructions
+PUSH_THREAD;	
+PULL 0x1;	
+J;	
+
+stackEmLock_acquire:	18 instructions
+MAIN2AUX;	
+PULL_CP 0x0;	
+PULL_CP 0x0;	
+FNC_LD_RA 0x0;	
+BNZ 0x9;	
+FNC_LD_RSV_EM 0x0;	
+BNZ 0x8;	
+PUSH 0x1;	
+PULL 0x1;	
+ST 0x0;	
+PUSH 0x1;	
+AUX2MAIN;	
+J;	
+DROP 0x0;	
+DROP 0x0;	
+PUSH 0x0;	
+AUX2MAIN;	
+J;	
+
+stackEmLock_test:	4 instructions
+PULL 0x1;	#var: 211
+FNC_LD_RA 0x0;	
+PULL 0x1;	#var: 299
+J;	
+
+main:	36 instructions
+DROP 0x1;	#var: 2
+DROP 0x1;	#var: 3
+PUSH 0x0;	
+PUSH -0x6000;	
+SIR_STORE;	
+PUSH 0x0;	
+PULL 0x1;	#var: 1
+J_PC 0x1;	#to : @BB_main_while.cond.preheader # 
+J_PC 0x1;	#to : @BB_main_while.cond # 
+PULL 0x1;	#var: 8
+PUSH 0x0;	
+PUSH -0x6000;	
+SIR_CALL stackEmLock_acquire_naive;	
+CMP_EQ;	
+BZ 0x3;	#branch to false path, leading to @BB_main_while.end
+PULL 0x1;	#var: 1
+J_PC -0x7;	#to @BB_main_while.cond # 
+J_PC 0x1;	#to @BB_main_while.end # 
+PUSH -0x6000;	
+SIR_CALL stackEmLock_release;	
+PUSH 0x1;	
+PULL 0x1;	#var: 8
+ADD;	
+PUSH 0xa;	
+PULL 0x1;	#var: 7
+TUCK_CP 0x1;	#var: 7
+CMP_EQ;	
+PULL 0x2;	#var: 1
+TUCK 0x1;	#var: 1
+BZ 0x3;	#branch to false path, leading to @BB_main_while.cond.preheader
+DROP 0x1;	#var: 7
+J_PC 0x2;	#to @BB_main_for.end # 
+J_PC -0x18;	#to @BB_main_while.cond.preheader # 
+PUSH 0x0;	
+PULL 0x1;	#var: 1
+J;	
+
+__$boot:	5 instructions
+PUSH 0x0;	#arg count
+PUSH -0x1;	#arg ptr
+SIR_CALL __$global;	#initialize globals
+SIR_CALL main;	#transfer control to main
+HALT;	#end of platform main
+
+stackEmLock_release:	5 instructions
+PULL 0x1;	#var: 111
+PUSH 0x0;	
+PULL 0x1;	#var: 111
+FNC_ST_RA_NOACK 0x0;	
+J;	
+
+__$global:	1 instructions
+J;	#Return to boot routine
+
+stackEmLock_acquire_naive:	14 instructions
+MAIN2AUX;	
+PULL_CP 0x0;	
+FNC_LD_RSV_EM 0x0;	
+BNZ 0x6;	
+PUSH 0x1;	
+PULL 0x1;	
+ST 0x0;	
+PUSH 0x1;	
+AUX2MAIN;	
+J;	
+DROP 0x0;	
+PUSH 0x0;	
+AUX2MAIN;	
+J;	
+
+stackEm_halt:	2 instructions
+DROP 0x0;	#var: 299
+HALT;	
+
+stackEM_nop:	1 instructions
+J;	
+
+stackEmLock_allocate:	3 instructions
+PULL 0x1;	#var: 11
+SIR_CALL stackEmLock_release;	
+J;	

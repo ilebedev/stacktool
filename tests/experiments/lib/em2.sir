@@ -1,0 +1,45 @@
+
+# return stack list in the function declaration is only for counting
+# and the exact variables are never used
+
+#FUNCTION <return address variable> (<return stack>) <name> (<argument stack>){
+#   ...
+#}
+
+# 
+MODULE module{
+	#void stackEm_halt();
+	# return address: 299
+	#
+	FUNCTION 299 () stackEm_halt (){
+		BASIC_BLOCK @BB_stackEm_halt[]{
+			EXPRESSION () -> (){
+				HALT;
+			}
+		}
+	}
+	
+	#void stackEm_halt();
+	# return address: 399
+	#
+	FUNCTION 399 (301) stackEM_getThreadID (){
+		BASIC_BLOCK @BB_stackEM_getThreadID []{
+			EXPRESSION (399) -> (){
+				PUSH_SPECIAL 2;
+				PULL 1;
+				J;
+			}
+		}
+	}
+	
+	#void stackEM_nop();
+	# return address: 499
+	#
+	FUNCTION 499 () stackEM_nop (){
+		BASIC_BLOCK @BB_stackEM_nop[]{
+			EXPRESSION (499) -> (){
+				J;
+			}
+		}
+	}
+}

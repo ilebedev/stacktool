@@ -1,0 +1,68 @@
+MODULE module{
+		CONSTANTS_TABLE{
+			EXPRESSION () -> (5){	#Constant
+				PUSH 40960;
+			}
+			EXPRESSION () -> (6){	#Constant
+				PUSH 0;
+			}
+			EXPRESSION () -> (11){	#Constant
+				PUSH 1;
+			}
+			EXPRESSION () -> (13){	#Constant
+				PUSH 10;
+			}
+		}
+		GLOBALS{
+		}
+	FUNCTION 1 (4) main (2, 3){
+		BASIC_BLOCK @BB_main_entry[]{
+			EXPRESSION (5, 6) -> (){	#Store
+				SIR_STORE;
+			}
+			EXPRESSION () -> (){	#branch
+				SIR_JUMP @BB_main_while.cond.preheader;
+			}
+		}
+		BASIC_BLOCK @BB_main_while.cond.preheader[
+			@BB_main_entry:(<6->8>),
+			@BB_main_while.end:(<7->8>)
+		]{
+			EXPRESSION () -> (){	#branch
+				SIR_JUMP @BB_main_while.cond;
+			}
+		}
+		BASIC_BLOCK @BB_main_while.cond[]{
+			EXPRESSION (5) -> (9){	#call
+				SIR_CALL stackEmLock_acquire_naive;
+			}
+			EXPRESSION (9, 6) -> (10){	#Equality comparison
+				CMP_EQ;
+			}
+			EXPRESSION (10) -> (){	#branch
+				SIR_BRANCH @BB_main_while.cond;
+				SIR_JUMP @BB_main_while.end;
+			}
+		}
+		BASIC_BLOCK @BB_main_while.end[]{
+			EXPRESSION (5) -> (){	#call
+				SIR_CALL stackEmLock_release;
+			}
+			EXPRESSION (8, 11) -> (7){	#Addition
+				ADD;
+			}
+			EXPRESSION (7, 13) -> (12){	#Equality comparison
+				CMP_EQ;
+			}
+			EXPRESSION (12) -> (){	#branch
+				SIR_BRANCH @BB_main_for.end;
+				SIR_JUMP @BB_main_while.cond.preheader;
+			}
+		}
+		BASIC_BLOCK @BB_main_for.end[]{
+			EXPRESSION (1, 6) -> (){	#return
+				J;
+			}
+		}
+	}
+}
